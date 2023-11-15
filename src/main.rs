@@ -37,7 +37,7 @@ async fn callback(
         .exchange_code(callback_query.code.clone())
         .await
         .unwrap();
-    println!("{}", access_token.access_token);
+    // println!("{}", access_token.access_token);
     HttpResponse::Ok().body("Hello world!")
 }
 

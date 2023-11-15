@@ -1,6 +1,8 @@
 use reqwest::Client as HttpClient;
 use serde::{Deserialize, Serialize};
 
+use std::collections::HashMap;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AccessToken {
     pub access_token: String,
@@ -27,21 +29,22 @@ impl DiscordClient {
         }
     }
 
-    pub async fn exchange_code(&self, code: String) -> anyhow::Result<AccessToken> {
+    pub async fn exchange_code(&self, code: String) -> anyhow::Result<()> {
+        let mut params = HashMap::new();
+        params.insert("grant_type", "authorization_code");
+        params.insert("code", &code);
+        params.insert("redirect_uri", &self.redirect_uri);
         let response = self
             .http
             .post("https://discord.com/api/v10/oauth2/token")
-            .query(&[
-                ("grant_type", "authorization_code"),
-                ("code", &code),
-                ("redirect_uri", &self.redirect_uri),
-            ])
+            .form(&params)
             .basic_auth(&self.client_id, Some(&self.client_secret))
             .header("Content-Type", "application/x-www-form-urlencoded")
+            .header("Content-Length", "0")
             .send()
-            .await?
-            .json::<AccessToken>()
             .await?;
-        Ok(response)
+
+        println!("{:?}", response.text().await?);
+        Ok(())
     }
 }
