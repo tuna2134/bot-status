@@ -15,7 +15,7 @@ pub async fn check_ratelimit(
     token: String,
     per_time: u64,
     per_count: u64,
-) -> anyhow::Result<(bool)> {
+) -> anyhow::Result<bool> {
     let mut ratelimit = ratelimit.lock().await;
     let now_time = SystemTime::now()
         .duration_since(SystemTime::UNIX_EPOCH)?
@@ -24,14 +24,14 @@ pub async fn check_ratelimit(
         Some(data) => {
             if data.request_count > per_count {
                 if now_time - data.first_request_time < per_time {
-                    return Ok(true);
+                    Ok(true)
                 } else {
                     data.request_count = 0;
-                    return Ok(false);
+                    Ok(false)
                 }
             } else {
                 data.request_count += 1;
-                return Ok(false);
+                Ok(false)
             }
         }
         None => {
@@ -42,7 +42,7 @@ pub async fn check_ratelimit(
                     request_count: 1,
                 },
             );
-            return Ok(false);
+            Ok(false)
         }
     }
 }
