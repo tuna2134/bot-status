@@ -3,13 +3,18 @@ use actix_web::{get, web, App, HttpResponse, HttpServer, Responder};
 use dotenvy::dotenv;
 use sqlx::mysql::MySqlPool;
 use std::env;
+use std::collections::HashMap;
 use serde::Deserialize;
+use tokio::sync::Mutex;
+use std::sync::Arc;
 
 mod discord;
+mod utils;
 
 struct AppState {
     pool: MySqlPool,
     discord: discord::DiscordClient,
+    ratelimit: Arc<Mutex<HashMap<String, utils::Ratelimit>>>,
 }
 
 #[get("/")]
@@ -27,6 +32,7 @@ async fn callback(app_state: web::Data<AppState>, callback_query: web::Query<Cal
     let access_token = app_state.discord.exchange_code(callback_query.code.clone())
         .await
         .unwrap();
+    println!("{}", access_token.access_token);
     HttpResponse::Ok().body("Hello world!")
 }
 
@@ -42,14 +48,15 @@ async fn main() -> anyhow::Result<()> {
         App::new()
             .service(index)
             .service(callback)
-            .app_data(AppState {
+            .app_data(web::Data::new(AppState {
                 pool: pool.clone(),
                 discord: discord::DiscordClient::new(
                     discord_client_id.clone(),
                     discord_client_secret.clone(),
                     discord_redirect_uri.clone(),
                 ),
-            })
+                ratelimit: Arc::new(Mutex::new(HashMap::new()))
+            }))
     })
     .bind(("0.0.0.0", 8080))?
     .run()
