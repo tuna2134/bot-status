@@ -38,6 +38,8 @@ async fn callback(
         .await
         .unwrap();
     // println!("{}", access_token.access_token);
+    // let user: discord::DiscordUser = reqwest::
+    // let is_registred = sqlx::query!("SELECT *")
     HttpResponse::Ok().body("Hello world!")
 }
 

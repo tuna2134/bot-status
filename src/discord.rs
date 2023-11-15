@@ -19,6 +19,12 @@ pub struct DiscordClient {
     redirect_uri: String,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct DiscordUser {
+    username: String,
+    id: String,
+}
+
 impl DiscordClient {
     pub fn new(client_id: String, client_secret: String, redirect_uri: String) -> Self {
         Self {
@@ -29,7 +35,7 @@ impl DiscordClient {
         }
     }
 
-    pub async fn exchange_code(&self, code: String) -> anyhow::Result<()> {
+    pub async fn exchange_code(&self, code: String) -> anyhow::Result<AccessToken> {
         let mut params = HashMap::new();
         params.insert("grant_type", "authorization_code");
         params.insert("code", &code);
@@ -40,11 +46,8 @@ impl DiscordClient {
             .form(&params)
             .basic_auth(&self.client_id, Some(&self.client_secret))
             .header("Content-Type", "application/x-www-form-urlencoded")
-            .header("Content-Length", "0")
             .send()
             .await?;
-
-        println!("{:?}", response.text().await?);
-        Ok(())
+        Ok(response.json().await?)
     }
 }
