@@ -10,9 +10,15 @@ pub struct Ratelimit {
     request_count: u64,
 }
 
-pub async fn check_ratelimit(ratelimit: Arc<Mutex<HashMap<String, Ratelimit>>>, token: String, per_time: u64, per_count: u64) -> anyhow::Result<(bool)> {
+pub async fn check_ratelimit(
+    ratelimit: Arc<Mutex<HashMap<String, Ratelimit>>>,
+    token: String,
+    per_time: u64,
+    per_count: u64,
+) -> anyhow::Result<(bool)> {
     let mut ratelimit = ratelimit.lock().await;
-    let now_time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH)?
+    let now_time = SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)?
         .as_secs();
     match ratelimit.get_mut(&token) {
         Some(data) => {
@@ -29,10 +35,13 @@ pub async fn check_ratelimit(ratelimit: Arc<Mutex<HashMap<String, Ratelimit>>>, 
             }
         }
         None => {
-            ratelimit.insert(token, Ratelimit {
-                first_request_time: now_time,
-                request_count: 1,
-            });
+            ratelimit.insert(
+                token,
+                Ratelimit {
+                    first_request_time: now_time,
+                    request_count: 1,
+                },
+            );
             return Ok(false);
         }
     }

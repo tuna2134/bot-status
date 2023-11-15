@@ -1,12 +1,12 @@
 use actix_web::{get, web, App, HttpResponse, HttpServer, Responder};
 
 use dotenvy::dotenv;
-use sqlx::mysql::MySqlPool;
-use std::env;
-use std::collections::HashMap;
 use serde::Deserialize;
-use tokio::sync::Mutex;
+use sqlx::mysql::MySqlPool;
+use std::collections::HashMap;
+use std::env;
 use std::sync::Arc;
+use tokio::sync::Mutex;
 
 mod discord;
 mod utils;
@@ -28,8 +28,13 @@ struct CallbackQuery {
 }
 
 #[get("/exchange_code")]
-async fn callback(app_state: web::Data<AppState>, callback_query: web::Query<CallbackQuery>) -> impl Responder {
-    let access_token = app_state.discord.exchange_code(callback_query.code.clone())
+async fn callback(
+    app_state: web::Data<AppState>,
+    callback_query: web::Query<CallbackQuery>,
+) -> impl Responder {
+    let access_token = app_state
+        .discord
+        .exchange_code(callback_query.code.clone())
         .await
         .unwrap();
     println!("{}", access_token.access_token);
@@ -55,7 +60,7 @@ async fn main() -> anyhow::Result<()> {
                     discord_client_secret.clone(),
                     discord_redirect_uri.clone(),
                 ),
-                ratelimit: Arc::new(Mutex::new(HashMap::new()))
+                ratelimit: Arc::new(Mutex::new(HashMap::new())),
             }))
     })
     .bind(("0.0.0.0", 8080))?
